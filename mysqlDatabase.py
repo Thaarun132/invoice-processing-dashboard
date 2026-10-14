@@ -2,16 +2,17 @@ import os
 import re
 import mysql.connector
 from databaseConnection import DatabaseConnection  # Or whatever your base abstract class filename is
+import os
 
 class MySQLDatabase(DatabaseConnection):
     """MySQL connector explicitly locked down to your custom port 330 architecture."""
     
     def __init__(self):
-        self.host = "localhost"
-        self.port = 330  #Force port 330 here
-        self.user = "root"
+        self.host = os.getenv("MYSQL_HOST")
+        self.port = os.getenv("MYSQL_PORT")  #Force port 330 here
+        self.user = os.getenv("MYSQL_USERNAME")
         self.password = os.getenv("MYSQL_PASSWORD")  # Pulls securely from your hidden .env file
-        self.database = "invoice_db"
+        self.database = os.getenv("MYSQL_DB")
 
     def _clean_numeric(self, val) -> float:
         """Helper to strip currency formats ('QAR 1,734.04' -> 1734.04)."""
