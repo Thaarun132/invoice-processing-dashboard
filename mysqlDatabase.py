@@ -1,21 +1,20 @@
 import os
 import re
 import mysql.connector
-from databaseConnection import DatabaseConnection  # Or whatever your base abstract class filename is
-import os
+from databaseConnection import DatabaseConnection
 
 class MySQLDatabase(DatabaseConnection):
-    """MySQL connector explicitly locked down to your custom port 330 architecture."""
+    #MySQL connection with python code
     
     def __init__(self):
         self.host = os.getenv("MYSQL_HOST")
-        self.port = os.getenv("MYSQL_PORT")  #Force port 330 here
+        self.port = os.getenv("MYSQL_PORT")
         self.user = os.getenv("MYSQL_USERNAME")
-        self.password = os.getenv("MYSQL_PASSWORD")  # Pulls securely from your hidden .env file
+        self.password = os.getenv("MYSQL_PASSWORD")
         self.database = os.getenv("MYSQL_DB")
 
     def _clean_numeric(self, val) -> float:
-        """Helper to strip currency formats ('QAR 1,734.04' -> 1734.04)."""
+        #Helper to strip currency formats ('QAR 1,734.04' -> 1734.04)
         if not val: 
             return 0.0
         cleaned = re.sub(r'[^\d.]', '', str(val))
@@ -23,14 +22,13 @@ class MySQLDatabase(DatabaseConnection):
 
 
     def _get_connection(self):
-        """Creates an authenticated connection object forcing your custom port."""
+        #Execute connection
         if not self.password:
             raise ValueError("Error: MYSQL_PASSWORD is missing from your .env file setup!")
             
-        # CRITICAL: We MUST explicitly pass port=self.port here so it doesn't default to 3306
         return mysql.connector.connect(
             host=self.host,
-            port=self.port,  #THIS FIXES THE ERRNO 10061 ERROR
+            port=self.port,
             user=self.user,
             password=self.password,
             database=self.database
@@ -41,11 +39,10 @@ class MySQLDatabase(DatabaseConnection):
         bill_info = extracted_data["billing_details"]
         fin_summary = extracted_data["financial_summary"]
         
-        db = self._get_connection()  # Using your port 330 connection helper
+        db = self._get_connection()
         cursor = db.cursor()
         
         try:
-            # 🔍 Step 0: Check if this invoice number already exists in the database
             check_sql = "SELECT invoice_number FROM invoices WHERE invoice_number = %s"
             cursor.execute(check_sql, (inv_info["invoice_number"],))
             result = cursor.fetchone()
@@ -54,7 +51,7 @@ class MySQLDatabase(DatabaseConnection):
                 raise ValueError(f"Invoice '{inv_info['invoice_number']}' already exists in the system!")
 
             
-            # # 1. Insert into Parent Table ('invoices') if it does NOT exist
+            # 1. Insert into Parent Table ('invoices') if it does NOT exist
             sql_parent = """
                 INSERT INTO invoices (
                     invoice_number, invoice_date, due_date, po_number, payment_terms,
@@ -70,9 +67,8 @@ class MySQLDatabase(DatabaseConnection):
                 self._clean_numeric(fin_summary["balance_due"]), inv_info["status"]
             )
             cursor.execute(sql_parent, parent_vals)
-            
-            # ... Followed by your child 'invoice_items' table insertion loop ...
 
+            # 1. Insert into Child Table ('invoice_items')
             sql_child = """
                 INSERT INTO invoice_items (invoice_number, description, quantity, unit_price, amount)
                 VALUES (%s, %s, %s, %s, %s)
@@ -85,21 +81,18 @@ class MySQLDatabase(DatabaseConnection):
                 )
                 cursor.execute(sql_child, child_vals)
             db.commit()
-            print(f"[MySQL] Invoice {inv_info['invoice_number']} cleanly stored in database.")
 
         except Exception as error:
             db.rollback()
-            print(f"[MySQL] Transaction Failure: Rolled back changes. Details: {error}")
             raise error
         finally:
             cursor.close()
             db.close()
 
     def fetch_data(self):
-        """Fetches lines using our clean connection helper method."""
+        #Fetches data from Mysql database
         import pandas as pd
         
-        # Open connection utilizing port 330!
         db = self._get_connection()
         
         query = """

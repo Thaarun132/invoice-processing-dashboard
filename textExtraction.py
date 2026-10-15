@@ -1,14 +1,10 @@
 import json
 import os
-from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-# Load environment configurations at script entry point
-load_dotenv()
-
 class InvoiceExtractor():
-    """Handles all interactions with the Gemini API to read visual layouts."""
+    #Handles all interactions with the Gemini API to extract images text.
     
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
@@ -20,7 +16,7 @@ class InvoiceExtractor():
         self.model_name = "gemini-3.5-flash-lite"
 
     def _get_layout_prompt(self) -> str:
-        """Returns the strict blueprint structural layout prompt guide."""
+        #Returns the strict blueprint structure what gemini should do.
         return """
         Analyze this invoice image and extract all text content while maintaining its structured layout.
         Return the information in this strict JSON format:
@@ -55,14 +51,12 @@ class InvoiceExtractor():
         """
 
     def extract_data(self, image_path: str) -> dict:
-        """Reads image binary data and queries Gemini for structural JSON layout."""
+        #Reads image binary data and queries Gemini for structural JSON layout.
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Could not locate image file at: {image_path}")
             
         with open(image_path, "rb") as f:
             image_bytes = f.read()
-
-        print(f"AI Engine: Reading layout coordinates for {os.path.basename(image_path)}...")
         
         response = self.client.models.generate_content(
             model=self.model_name,
