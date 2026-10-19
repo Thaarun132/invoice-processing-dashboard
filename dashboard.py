@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from databaseConnection import DatabaseConnection
+from mysqlDatabase import MySQLDatabase
 from dotenv import load_dotenv
 from pipeline import Pipeline
 from uiComponents import UIComponents
@@ -10,8 +10,8 @@ load_dotenv()
 class InvoiceDashboardApp:
     #Dashboard code
     
-    def __init__(self, db_manager: DatabaseConnection):
-        self.db = db_manager
+    def __init__(self):
+        self.db = MySQLDatabase()
         self.ai = Pipeline(db_manager=self.db)
         self.ui = UIComponents()
 
